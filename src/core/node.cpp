@@ -153,6 +153,7 @@ Node::get_transform() const
 	auto const rotation_z = glm::rotate(glm::mat4(), _rotation.z, glm::vec3(0.0, 0.0, 1.0));
 	auto const rotating = rotation_z * rotation_y * rotation_x;
 
+	auto transformation = translating*scaling*rotating;
 	// Todo: Compute the correct transform matrix
-	return translating;
+	return transformation;
 }

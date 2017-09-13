@@ -86,9 +86,9 @@ edaf80::Assignment1::run()
 	auto sun = Node();
 	sun.set_geometry(sphere);
 	sun.set_program(shader, [](GLuint /*program*/){});
-	//
-	// Todo: Attach a texture to the sun
-	//
+
+	sun.add_texture("diffuse_texture", sun_texture, GL_TEXTURE_2D);
+	// sun.set_scaling(glm::vec3(2.0f, 2.0f, 2.0f));
 
 	auto world = Node();
 	world.add_child(&sun);
@@ -98,6 +98,18 @@ edaf80::Assignment1::run()
 	// Todo: Create an Earth node
 	//
 
+	auto earth_orbit = Node();
+	world.add_child(&earth_orbit);
+
+	auto earth = Node();
+	earth.set_geometry(sphere);
+	earth.set_program(shader, [](GLuint /*program*/){});
+	earth_orbit.add_child(&earth);
+	earth.set_translation(glm::vec3(3.0f, 0.0f, 0.0f));
+
+	auto earth_texture = bonobo::loadTexture2D("earth_diffuse.png");
+	earth.add_texture("diffuse_texture", earth_texture, GL_TEXTURE_2D);
+	earth.set_scaling(glm::vec3(0.5f, 0.5f, 0.5f));
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -128,8 +140,10 @@ edaf80::Assignment1::run()
 		//
 		// How-To: Translate the sun
 		//
-		sun.set_translation(glm::vec3(std::sin(nowTime), 0.0f, 0.0f));
-
+		// sun.set_translation(glm::vec3(std::sin(nowTime), 0.0f, 0.0f));
+		sun.set_rotation_y(fmod(nowTime, 100*3.1416f));
+		earth_orbit.set_rotation_y(fmod(nowTime, 100*3.1416f) * 0.5f);
+		earth.set_rotation_y(fmod(nowTime, 100*3.1416f) * 2.0f);
 
 		auto const window_size = window->GetDimensions();
 		glViewport(0, 0, window_size.x, window_size.y);
@@ -154,7 +168,7 @@ edaf80::Assignment1::run()
 			//
 			// Todo: Compute the current node's world matrix
 			//
-			auto const current_node_world_matrix = current_node_matrix;
+			auto const current_node_world_matrix = parent_matrix*current_node_matrix;
 			current_node->render(mCamera.GetWorldToClipMatrix(), current_node_world_matrix);
 
 			for (int i = static_cast<int>(current_node->get_children_nb()) - 1; i >= 0; --i) {
