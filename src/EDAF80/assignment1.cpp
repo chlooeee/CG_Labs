@@ -101,15 +101,34 @@ edaf80::Assignment1::run()
 	auto earth_orbit = Node();
 	world.add_child(&earth_orbit);
 
+	auto earth_translation = Node();
+	earth_translation.set_translation(glm::vec3(4.0f, 0.0f, 0.0f));
+	earth_orbit.add_child(&earth_translation);
+
 	auto earth = Node();
 	earth.set_geometry(sphere);
 	earth.set_program(shader, [](GLuint /*program*/){});
-	earth_orbit.add_child(&earth);
-	earth.set_translation(glm::vec3(3.0f, 0.0f, 0.0f));
+	earth_translation.add_child(&earth);
 
 	auto earth_texture = bonobo::loadTexture2D("earth_diffuse.png");
 	earth.add_texture("diffuse_texture", earth_texture, GL_TEXTURE_2D);
 	earth.set_scaling(glm::vec3(0.5f, 0.5f, 0.5f));
+
+	auto moon_orbit = Node();
+	earth_translation.add_child(&moon_orbit);
+
+	auto moon_translation = Node();
+	moon_translation.set_translation(glm::vec3(1.5f, 0.0f, 0.0f));
+	moon_orbit.add_child(&moon_translation);
+
+	auto moon = Node();
+	moon.set_geometry(sphere);
+	moon.set_program(shader, [](GLuint /*program*/) {});
+	moon.add_texture("diffuse_texture", sun_texture, GL_TEXTURE_2D);
+	moon.set_scaling(glm::vec3(0.1f, 0.1f, 0.1f));
+
+	moon_translation.add_child(&moon);
+
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -144,6 +163,8 @@ edaf80::Assignment1::run()
 		sun.set_rotation_y(fmod(nowTime, 100*3.1416f));
 		earth_orbit.set_rotation_y(fmod(nowTime, 100*3.1416f) * 0.5f);
 		earth.set_rotation_y(fmod(nowTime, 100*3.1416f) * 2.0f);
+		moon_orbit.set_rotation_y(fmod(nowTime, 100 * 3.1416f) * 2.0f);
+		moon.set_rotation_y(fmod(nowTime, 100 * 3.1416f) * 2.0f);
 
 		auto const window_size = window->GetDimensions();
 		glViewport(0, 0, window_size.x, window_size.y);
