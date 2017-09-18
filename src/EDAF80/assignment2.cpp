@@ -69,6 +69,11 @@ edaf80::Assignment2::run()
 	if (shape.vao == 0u)
 		return;
 
+	auto const shape_sphere = parametric_shapes::createSphere(25u, 15u, 0.5f);
+	if (shape.vao == 0u) {
+		return;
+	}
+
 	// Set up the camera
 	FPSCameraf mCamera(bonobo::pi / 4.0f,
 	                   static_cast<float>(config::resolution_x) / static_cast<float>(config::resolution_y),
@@ -115,8 +120,13 @@ edaf80::Assignment2::run()
 
 	auto circle_rings = Node();
 	circle_rings.set_geometry(shape);
+	circle_rings.set_scaling(glm::vec3(0.1f, 0.1f, 1.0f));
 	circle_rings.set_program(fallback_shader, set_uniforms);
 
+	auto sphere = Node();
+	sphere.set_geometry(shape_sphere);
+	sphere.set_program(fallback_shader, set_uniforms);
+	sphere.set_translation(glm::vec3(2.0f, 0.0f, 0.0f));
 
 	//! \todo Create a tesselated sphere and a tesselated torus
 
@@ -157,15 +167,19 @@ edaf80::Assignment2::run()
 
 		if (inputHandler->GetKeycodeState(GLFW_KEY_1) & JUST_PRESSED) {
 			circle_rings.set_program(fallback_shader, set_uniforms);
+			sphere.set_program(fallback_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_2) & JUST_PRESSED) {
 			circle_rings.set_program(diffuse_shader, set_uniforms);
+			sphere.set_program(diffuse_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_3) & JUST_PRESSED) {
 			circle_rings.set_program(normal_shader, set_uniforms);
+			sphere.set_program(normal_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_4) & JUST_PRESSED) {
 			circle_rings.set_program(texcoord_shader, set_uniforms);
+			sphere.set_program(texcoord_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_Z) & JUST_PRESSED) {
 			polygon_mode = get_next_mode(polygon_mode);
@@ -183,6 +197,7 @@ edaf80::Assignment2::run()
 		}
 
 		circle_rings.rotate_y(0.01f);
+		sphere.rotate_y(0.01f);
 
 
 		//! \todo Interpolate the movement of a shape between various
@@ -196,6 +211,7 @@ edaf80::Assignment2::run()
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		circle_rings.render(mCamera.GetWorldToClipMatrix(), circle_rings.get_transform());
+		sphere.render(mCamera.GetWorldToClipMatrix(), sphere.get_transform());
 
 		bool const opened = ImGui::Begin("Scene Controls", nullptr, ImVec2(300, 100), -1.0f, 0);
 		if (opened) {
