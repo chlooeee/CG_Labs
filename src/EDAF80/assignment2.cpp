@@ -16,6 +16,8 @@
 #include <imgui.h>
 #include "external/imgui_impl_glfw_gl3.h"
 
+#include <array>
+
 #include "external/glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -136,22 +138,30 @@ edaf80::Assignment2::run()
 	glEnable(GL_DEPTH_TEST);
 
 	// Enable face culling to improve performance
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_FRONT);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
 	//glCullFace(GL_BACK);
 
+	std::array<glm::vec3, 4> controlpoints = { glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 2.0f, 1.0f), glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(1.0f, -1.0f, 1.5f)};
+	unsigned int pathindex = 0;
+	unsigned int num_controlpoints = controlpoints.size();
 
 	f64 ddeltatime;
 	size_t fpsSamples = 0;
 	double nowTime, lastTime = GetTimeSeconds();
 	double fpsNextTick = lastTime + 1.0;
+	unsigned int path_increment = 0;
 
 	while (!glfwWindowShouldClose(window->GetGLFW_Window())) {
 		nowTime = GetTimeSeconds();
 		ddeltatime = nowTime - lastTime;
+		float interpolationstep = 1.0f - (fpsNextTick - nowTime);
 		if (nowTime > fpsNextTick) {
+			path_increment = 1;
 			fpsNextTick += 1.0;
 			fpsSamples = 0;
+		} else {
+			path_increment = 0;
 		}
 		fpsSamples++;
 
@@ -199,10 +209,24 @@ edaf80::Assignment2::run()
 		circle_rings.rotate_y(0.01f);
 		sphere.rotate_y(0.01f);
 
-
+	
+		if (use_linear) {
+			sphere.set_translation(interpolation::evalLERP(controlpoints[pathindex], controlpoints[(pathindex + 1)%num_controlpoints], interpolationstep));
+		}
+		else {
+			sphere.set_translation(interpolation::evalCatmullRom(controlpoints[pathindex],
+				controlpoints[(pathindex + 1)%num_controlpoints],
+				controlpoints[(pathindex + 2)%num_controlpoints],
+				controlpoints[(pathindex + 3)%num_controlpoints],
+				catmull_rom_tension, interpolationstep));
+		}
 		//! \todo Interpolate the movement of a shape between various
 		//!        control points
-
+		
+		pathindex += path_increment;
+		if (pathindex >= num_controlpoints) {
+			pathindex = 0;
+		}
 
 		auto const window_size = window->GetDimensions();
 		glViewport(0, 0, window_size.x, window_size.y);
