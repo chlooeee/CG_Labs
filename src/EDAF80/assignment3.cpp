@@ -71,6 +71,12 @@ edaf80::Assignment3::run()
 		return;
 	}
 
+	auto sphere_shape = parametric_shapes::createSphere(50u, 50u, 2.0f);
+	if (sphere_shape.vao == 0u) {
+		LogError("Failed to retrieve the sphere mesh");
+		return;
+	}
+
 	// Set up the camera
 	FPSCameraf mCamera(bonobo::pi / 4.0f,
 	                   static_cast<float>(config::resolution_x) / static_cast<float>(config::resolution_y),
@@ -86,8 +92,8 @@ edaf80::Assignment3::run()
 		LogError("Failed to load fallback shader");
 		return;
 	}
-	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u;
-	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader](){
+	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u;
+	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader](){
 		if (diffuse_shader != 0u)
 			glDeleteProgram(diffuse_shader);
 		diffuse_shader = bonobo::createProgram("diffuse.vert", "diffuse.frag");
@@ -105,6 +111,12 @@ edaf80::Assignment3::run()
 		texcoord_shader = bonobo::createProgram("texcoord.vert", "texcoord.frag");
 		if (texcoord_shader == 0u)
 			LogError("Failed to load texcoord shader");
+
+		if (texture_shader == 0u)
+			glDeleteProgram(texture_shader);
+		texture_shader = bonobo::createProgram("texture.vert", "texture.frag");
+		if (texture_shader == 0u)
+			LogError("Failed to load custom texture shader");
 	};
 	reload_shaders();
 
@@ -127,11 +139,24 @@ edaf80::Assignment3::run()
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
+	//Setup for the texture shader
+	auto texture = bonobo::loadTexture2d("tiles.png");
+
+	auto const texture_set_uniforms = [texture](GLuint program) {
+		glUniform1ui(glGetUniformLocation(program, "Sampler"), 1, texture);
+	};
+
 	auto polygon_mode = polygon_mode_t::fill;
 
 	auto circle_ring = Node();
 	circle_ring.set_geometry(circle_ring_shape);
 	circle_ring.set_program(fallback_shader, set_uniforms);
+	circle_ring.set_scaling(glm::vec3(0.5f, 0.5f, 0.5f));
+
+	auto sphere = Node();
+	sphere.set_geometry(sphere_shape);
+	sphere.set_program(fallback_shader, set_uniforms);
+	sphere.set_translation(glm::vec3(2.0f, 0.0f, 0.0f));
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -139,7 +164,6 @@ edaf80::Assignment3::run()
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
 	//glCullFace(GL_BACK);
-
 
 	f64 ddeltatime;
 	size_t fpsSamples = 0;
@@ -166,15 +190,23 @@ edaf80::Assignment3::run()
 
 		if (inputHandler->GetKeycodeState(GLFW_KEY_1) & JUST_PRESSED) {
 			circle_ring.set_program(fallback_shader, set_uniforms);
+			sphere.set_program(fallback_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_2) & JUST_PRESSED) {
 			circle_ring.set_program(diffuse_shader, set_uniforms);
+			sphere.set_program(diffuse_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_3) & JUST_PRESSED) {
 			circle_ring.set_program(normal_shader, set_uniforms);
+			sphere.set_program(normal_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_4) & JUST_PRESSED) {
 			circle_ring.set_program(texcoord_shader, set_uniforms);
+			sphere.set_program(texcoord_shader, set_uniforms);
+		}
+		if (inputHandler->GetKeycodeState(GLFW_KEY_5) & JUST_PRESSED) {
+			circle_ring.set_program(texture_shader, texture_set_uniforms);
+			sphere.set_program(texture_shader, texture_set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_Z) & JUST_PRESSED) {
 			polygon_mode = get_next_mode(polygon_mode);
@@ -202,7 +234,11 @@ edaf80::Assignment3::run()
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+		circle_ring.rotate_y(0.01f);
 		circle_ring.render(mCamera.GetWorldToClipMatrix(), circle_ring.get_transform());
+
+		sphere.rotate_y(0.01f);
+		sphere.render(mCamera.GetWorldToClipMatrix(), sphere.get_transform());
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -237,6 +273,8 @@ edaf80::Assignment3::run()
 	diffuse_shader = 0u;
 	glDeleteProgram(fallback_shader);
 	diffuse_shader = 0u;
+	glDeleteProgram(texture_shader);
+	texture_shader = 0u;
 }
 
 int main()
