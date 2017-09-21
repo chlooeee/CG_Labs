@@ -187,14 +187,15 @@ parametric_shapes::createSphere(unsigned int const res_theta,
 	{
 		for (unsigned int j = 0u; j < res_phi - 1u; ++j)
 		{
+
 			indices[index] = glm::uvec3(res_phi * i + j,
-				res_phi * i + j + 1u,
-				res_phi * i + j + 1u + res_phi);
+				res_phi * i + j + 1u + res_phi,
+				res_phi * i + j + 1u);
 			++index;
 
 			indices[index] = glm::uvec3(res_phi * i + j,
-				res_phi * i + j + res_phi + 1u,
-				res_phi * i + j + res_phi);
+				res_phi * i + j + res_phi,
+				res_phi * i + j + res_phi + 1u);
 			++index;
 		}
 	}

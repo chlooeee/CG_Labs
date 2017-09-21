@@ -139,10 +139,20 @@ edaf80::Assignment2::run()
 
 	// Enable face culling to improve performance
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-	//glCullFace(GL_BACK);
+	//glCullFace(GL_FRONT);
+	glCullFace(GL_BACK);
 
-	std::array<glm::vec3, 4> controlpoints = { glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 2.0f, 1.0f), glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(1.0f, -1.0f, 1.5f)};
+	std::array<glm::vec3, 10> controlpoints = { glm::vec3(1.0f, 1.0f, 1.0f),
+		glm::vec3(1.0f, 2.0f, 1.0f),
+		glm::vec3(-1.0f, -1.0f, -1.0f),
+		glm::vec3(1.0f, -1.0f, 1.5f),
+		glm::vec3(0.73f, 0.73f, -4.0f),
+		glm::vec3(1.5f, 2.0f, 1.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f),
+		glm::vec3(-1.0f, -1.0f, -1.0f),
+		glm::vec3(2.0f, -2.0f, 0.0f),
+		glm::vec3(-2.0, 2.0f, 2.0f)};
+
 	unsigned int pathindex = 0;
 	unsigned int num_controlpoints = controlpoints.size();
 
@@ -209,7 +219,6 @@ edaf80::Assignment2::run()
 		circle_rings.rotate_y(0.01f);
 		sphere.rotate_y(0.01f);
 
-	
 		if (use_linear) {
 			sphere.set_translation(interpolation::evalLERP(controlpoints[pathindex], controlpoints[(pathindex + 1)%num_controlpoints], interpolationstep));
 		}
