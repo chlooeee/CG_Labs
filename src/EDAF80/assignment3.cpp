@@ -92,8 +92,8 @@ edaf80::Assignment3::run()
 		LogError("Failed to load fallback shader");
 		return;
 	}
-	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u;
-	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader](){
+	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u, bump_shader = 0u;
+	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader,&bump_shader](){
 		if (diffuse_shader != 0u)
 			glDeleteProgram(diffuse_shader);
 		diffuse_shader = bonobo::createProgram("diffuse.vert", "diffuse.frag");
@@ -122,6 +122,13 @@ edaf80::Assignment3::run()
 		phong_shader = bonobo::createProgram("phong.vert", "phong.frag");
 		if (phong_shader == 0u)
 			LogError("Failed to load custom Phong shader");
+
+		if (bump_shader != 0u)
+			glDeleteProgram(bump_shader);
+		bump_shader = bonobo::createProgram("bumpmap.vert", "bumpmap.frag");
+		if (bump_shader == 0u)
+			LogError("Failed to load custom normal map shader");
+
 		printf("Reloaded shaders\n");
 	};
 	reload_shaders();
@@ -146,15 +153,39 @@ edaf80::Assignment3::run()
 	};
 
 	//Setup for the texture shader
-	auto texture = bonobo::loadTexture2D("tiles.png");
+	auto texture = bonobo::loadTexture2D("stone47_diffuse.png");
 	if (texture == 0u) {
 		LogError("Failed to load texture");
 		return;
 	}
 
-	auto const texture_set_uniforms = [texture](GLuint program) {
+	auto normal_texture = bonobo::loadTexture2D("stone47_bump.png");
+	if (normal_texture == 0u) {
+		LogError("Failed to load normal texture");
+		return;
+	}
+
+	auto const texture_set_uniforms = [&texture](GLuint program) {
 		glUniform1i(glGetUniformLocation(program, "sample_texture"), 0);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
+	};
+
+	auto const bumpmap_set_uniforms = [&normal_texture, &texture, &light_position, &camera_position, &ambient, &specular, &shininess](GLuint program) {
+		glUniform1i(glGetUniformLocation(program, "sample_texture_normals"), 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, normal_texture);
+
+		glUniform1i(glGetUniformLocation(program, "sample_texture"), 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
+		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+		glUniform3fv(glGetUniformLocation(program, "ambient"), 1, glm::value_ptr(ambient));
+		//glUniform3fv(glGetUniformLocation(program, "diffuse"), 1, glm::value_ptr(diffuse));
+		glUniform3fv(glGetUniformLocation(program, "specular"), 1, glm::value_ptr(specular));
+		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
 	auto polygon_mode = polygon_mode_t::fill;
@@ -222,6 +253,9 @@ edaf80::Assignment3::run()
 		if (inputHandler->GetKeycodeState(GLFW_KEY_6) & JUST_PRESSED) {
 			//circle_ring.set_program(phong_shader, phong_set_uniforms);
 			sphere.set_program(phong_shader, phong_set_uniforms);
+		}
+		if (inputHandler->GetKeycodeState(GLFW_KEY_7) & JUST_PRESSED) {
+			sphere.set_program(bump_shader, bumpmap_set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_Z) & JUST_PRESSED) {
 			polygon_mode = get_next_mode(polygon_mode);
