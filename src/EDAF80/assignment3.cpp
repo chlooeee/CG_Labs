@@ -142,7 +142,7 @@ edaf80::Assignment3::run()
 	auto ambient = glm::vec3(0.2f, 0.2f, 0.2f);
 	auto diffuse = glm::vec3(0.7f, 0.2f, 0.4f);
 	auto specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	auto shininess = 1.0f;
+	auto shininess = 500.0f;
 	auto const phong_set_uniforms = [&light_position,&camera_position,&ambient,&diffuse,&specular,&shininess](GLuint program){
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
@@ -153,13 +153,16 @@ edaf80::Assignment3::run()
 	};
 
 	//Setup for the texture shader
-	auto texture = bonobo::loadTexture2D("stone47_diffuse.png");
+	glActiveTexture(GL_TEXTURE0);
+
+	auto texture = bonobo::loadTexture2D("fieldstone_diffuse.png");
 	if (texture == 0u) {
 		LogError("Failed to load texture");
 		return;
 	}
 
-	auto normal_texture = bonobo::loadTexture2D("stone47_bump.png");
+	glActiveTexture(GL_TEXTURE1);
+	auto normal_texture = bonobo::loadTexture2D("fieldstone_bump.png");
 	if (normal_texture == 0u) {
 		LogError("Failed to load normal texture");
 		return;
@@ -171,7 +174,7 @@ edaf80::Assignment3::run()
 		glBindTexture(GL_TEXTURE_2D, texture);
 	};
 
-	auto const bumpmap_set_uniforms = [&normal_texture, &texture, &light_position, &camera_position, &ambient, &specular, &shininess](GLuint program) {
+	auto const bumpmap_set_uniforms = [&normal_texture, &texture, &light_position, &camera_position, &specular, &shininess](GLuint program) {
 		glUniform1i(glGetUniformLocation(program, "sample_texture_normals"), 1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, normal_texture);
@@ -182,8 +185,6 @@ edaf80::Assignment3::run()
 
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
-		glUniform3fv(glGetUniformLocation(program, "ambient"), 1, glm::value_ptr(ambient));
-		//glUniform3fv(glGetUniformLocation(program, "diffuse"), 1, glm::value_ptr(diffuse));
 		glUniform3fv(glGetUniformLocation(program, "specular"), 1, glm::value_ptr(specular));
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};

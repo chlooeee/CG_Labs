@@ -6,8 +6,6 @@ uniform mat4 normal_model_to_world;
 
 uniform vec3 light_position;
 uniform vec3 camera_position;
-uniform vec3 ambient;
-//uniform vec3 diffuse;
 uniform vec3 specular;
 uniform float shininess;
 
@@ -36,15 +34,17 @@ void main()
 	vec3 normal_world = (normal_model_to_world * vec4(normal_perturbed, 0)).xyz;
 	
 	// Phong shading
+	
+	vec3 object_color = texture(sample_texture, fs_in.texture_coords).xyz;
+	
 	vec3 light = normalize(light_position - fs_in.vertex_position);
 	normal_world = normalize(normal_world);
 	
-	vec3 diffuse = texture(sample_texture, fs_in.texture_coords).xyz;
-	vec3 diffuse_color = max(diffuse*dot(light, normal_world), vec3(0,0,0));
+	vec3 diffuse_color = max(object_color*dot(light, normal_world), vec3(0,0,0));
 	
 	vec3 view_vector = normalize(camera_position - fs_in.vertex_position);
 	
 	vec3 specular_color = max(specular * pow(dot(reflect(-light, normal_world), view_vector), shininess),vec3(0,0,0));
 	
-	frag_color = vec4((ambient + diffuse_color + specular_color), 1.0f);
+	frag_color = vec4((object_color + diffuse_color + specular_color), 1.0f);
 }
