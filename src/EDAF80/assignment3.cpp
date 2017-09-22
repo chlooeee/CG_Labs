@@ -161,6 +161,12 @@ edaf80::Assignment3::run()
 		return;
 	}
 
+	glActiveTexture(GL_TEXTURE2);
+	std::string skyboxname = "debug";
+	auto skybox_texture = bonobo::loadTextureCubeMap(skyboxname + "/posx.png", skyboxname + "negx.png",
+		skyboxname + "/posy.png", skyboxname + "/negy.png",
+		skyboxname + "/posz.png", skyboxname + "/negz.png");
+
 	glActiveTexture(GL_TEXTURE1);
 	auto normal_texture = bonobo::loadTexture2D("fieldstone_bump.png");
 	if (normal_texture == 0u) {
@@ -200,6 +206,10 @@ edaf80::Assignment3::run()
 	sphere.set_geometry(sphere_shape);
 	sphere.set_program(fallback_shader, set_uniforms);
 	sphere.set_translation(glm::vec3(2.0f, 0.0f, 0.0f));
+
+	auto skybox = Node();
+	skybox.set_geometry(sphere_shape);
+	skybox.set_program(skybox_shader, skybox_set_uniforms);
 
 	glEnable(GL_DEPTH_TEST);
 
