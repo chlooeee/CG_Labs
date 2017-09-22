@@ -65,13 +65,13 @@ void
 edaf80::Assignment3::run()
 {
 	// Load the sphere geometry
-	auto circle_ring_shape = parametric_shapes::createCircleRing(4u, 60u, 1.0f, 2.0f);
+	auto circle_ring_shape = parametric_shapes::createCircleRing(40u, 60u, 1.0f, 2.0f);
 	if (circle_ring_shape.vao == 0u) {
 		LogError("Failed to retrieve the circle ring mesh");
 		return;
 	}
 
-	auto sphere_shape = parametric_shapes::createSphere(50u, 50u, 2.0f);
+	auto sphere_shape = parametric_shapes::createSphere(500u, 500u, 2.0f);
 	if (sphere_shape.vao == 0u) {
 		LogError("Failed to retrieve the sphere mesh");
 		return;
@@ -92,8 +92,8 @@ edaf80::Assignment3::run()
 		LogError("Failed to load fallback shader");
 		return;
 	}
-	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u;
-	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader](){
+	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u;
+	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader](){
 		if (diffuse_shader != 0u)
 			glDeleteProgram(diffuse_shader);
 		diffuse_shader = bonobo::createProgram("diffuse.vert", "diffuse.frag");
@@ -112,11 +112,17 @@ edaf80::Assignment3::run()
 		if (texcoord_shader == 0u)
 			LogError("Failed to load texcoord shader");
 
-		if (texture_shader == 0u)
+		if (texture_shader != 0u)
 			glDeleteProgram(texture_shader);
 		texture_shader = bonobo::createProgram("texture.vert", "texture.frag");
 		if (texture_shader == 0u)
 			LogError("Failed to load custom texture shader");
+		if (phong_shader != 0u)
+			glDeleteProgram(phong_shader);
+		phong_shader = bonobo::createProgram("phong.vert", "phong.frag");
+		if (phong_shader == 0u)
+			LogError("Failed to load custom Phong shader");
+		printf("Reloaded shaders\n");
 	};
 	reload_shaders();
 
@@ -140,18 +146,23 @@ edaf80::Assignment3::run()
 	};
 
 	//Setup for the texture shader
-	auto texture = bonobo::loadTexture2d("tiles.png");
+	auto texture = bonobo::loadTexture2D("tiles.png");
+	if (texture == 0u) {
+		LogError("Failed to load texture");
+		return;
+	}
 
 	auto const texture_set_uniforms = [texture](GLuint program) {
-		glUniform1ui(glGetUniformLocation(program, "Sampler"), 1, texture);
+		glUniform1i(glGetUniformLocation(program, "sample_texture"), 0);
+		glBindTexture(GL_TEXTURE_2D, texture);
 	};
 
 	auto polygon_mode = polygon_mode_t::fill;
 
-	auto circle_ring = Node();
-	circle_ring.set_geometry(circle_ring_shape);
-	circle_ring.set_program(fallback_shader, set_uniforms);
-	circle_ring.set_scaling(glm::vec3(0.5f, 0.5f, 0.5f));
+	//auto circle_ring = Node();
+	//circle_ring.set_geometry(circle_ring_shape);
+	//circle_ring.set_program(fallback_shader, set_uniforms);
+	//circle_ring.set_scaling(glm::vec3(0.5f, 0.5f, 0.5f));
 
 	auto sphere = Node();
 	sphere.set_geometry(sphere_shape);
@@ -189,24 +200,28 @@ edaf80::Assignment3::run()
 		ImGui_ImplGlfwGL3_NewFrame();
 
 		if (inputHandler->GetKeycodeState(GLFW_KEY_1) & JUST_PRESSED) {
-			circle_ring.set_program(fallback_shader, set_uniforms);
+			//circle_ring.set_program(fallback_shader, set_uniforms);
 			sphere.set_program(fallback_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_2) & JUST_PRESSED) {
-			circle_ring.set_program(diffuse_shader, set_uniforms);
+			//circle_ring.set_program(diffuse_shader, set_uniforms);
 			sphere.set_program(diffuse_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_3) & JUST_PRESSED) {
-			circle_ring.set_program(normal_shader, set_uniforms);
+			//circle_ring.set_program(normal_shader, set_uniforms);
 			sphere.set_program(normal_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_4) & JUST_PRESSED) {
-			circle_ring.set_program(texcoord_shader, set_uniforms);
+			//circle_ring.set_program(texcoord_shader, set_uniforms);
 			sphere.set_program(texcoord_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_5) & JUST_PRESSED) {
-			circle_ring.set_program(texture_shader, texture_set_uniforms);
+			//circle_ring.set_program(texture_shader, texture_set_uniforms);
 			sphere.set_program(texture_shader, texture_set_uniforms);
+		}
+		if (inputHandler->GetKeycodeState(GLFW_KEY_6) & JUST_PRESSED) {
+			//circle_ring.set_program(phong_shader, phong_set_uniforms);
+			sphere.set_program(phong_shader, phong_set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_Z) & JUST_PRESSED) {
 			polygon_mode = get_next_mode(polygon_mode);
@@ -234,8 +249,8 @@ edaf80::Assignment3::run()
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-		circle_ring.rotate_y(0.01f);
-		circle_ring.render(mCamera.GetWorldToClipMatrix(), circle_ring.get_transform());
+		//circle_ring.rotate_y(0.01f);
+		//circle_ring.render(mCamera.GetWorldToClipMatrix(), circle_ring.get_transform());
 
 		sphere.rotate_y(0.01f);
 		sphere.render(mCamera.GetWorldToClipMatrix(), sphere.get_transform());
