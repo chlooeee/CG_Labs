@@ -92,8 +92,9 @@ edaf80::Assignment3::run()
 		LogError("Failed to load fallback shader");
 		return;
 	}
-	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u, bump_shader = 0u, skybox_shader = 0u;
-	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader,&bump_shader,&skybox_shader](){
+	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u, bump_shader = 0u,
+		skybox_shader = 0u, reflection_shader = 0u;
+	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader,&bump_shader,&skybox_shader,&reflection_shader](){
 		if (diffuse_shader != 0u)
 			glDeleteProgram(diffuse_shader);
 		diffuse_shader = bonobo::createProgram("diffuse.vert", "diffuse.frag");
@@ -135,6 +136,11 @@ edaf80::Assignment3::run()
 		if (skybox_shader == 0u)
 			LogError("Failed to load custom skybox shader");
 
+		if (reflection_shader != 0u)
+			glDeleteProgram(reflection_shader);
+		reflection_shader = bonobo::createProgram("reflection.vert", "reflection.frag");
+		if (reflection_shader == 0u)
+			LogError("Failed to load custom reflection shader");
 
 		printf("Reloaded shaders\n");
 	};
@@ -212,6 +218,14 @@ edaf80::Assignment3::run()
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
 	};
 
+	auto const reflection_set_uniforms = [skybox_texture, &camera_position](GLuint program) {
+		glUniform1i(glGetUniformLocation(program, "reflection_cube"), 2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+
+		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+	};
+
 	auto polygon_mode = polygon_mode_t::fill;
 
 	//auto circle_ring = Node();
@@ -283,9 +297,15 @@ edaf80::Assignment3::run()
 			//circle_ring.set_program(phong_shader, phong_set_uniforms);
 			sphere.set_program(phong_shader, phong_set_uniforms);
 		}
+	
 		if (inputHandler->GetKeycodeState(GLFW_KEY_7) & JUST_PRESSED) {
 			sphere.set_program(bump_shader, bumpmap_set_uniforms);
 		}
+	
+		if (inputHandler->GetKeycodeState(GLFW_KEY_8) & JUST_PRESSED) {
+			sphere.set_program(reflection_shader, reflection_set_uniforms);
+		}
+
 		if (inputHandler->GetKeycodeState(GLFW_KEY_Z) & JUST_PRESSED) {
 			polygon_mode = get_next_mode(polygon_mode);
 		}
