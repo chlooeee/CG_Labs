@@ -2,14 +2,16 @@
 
 uniform samplerCube skybox_cube;
 
-in vec3 normal;
+in VS_OUT{
+	vec3 world_normal;
+} fs_in;
 
 out vec4 frag_color;
 
 void main()
 {
 	// Normalize!
-	normal = normalize(normal);
+	vec3 normal = normalize(fs_in.world_normal);
 
 	frag_color = texture(skybox_cube, normal);
 }

@@ -92,8 +92,8 @@ edaf80::Assignment3::run()
 		LogError("Failed to load fallback shader");
 		return;
 	}
-	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u, bump_shader = 0u;
-	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader,&bump_shader](){
+	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u, bump_shader = 0u, skybox_shader = 0u;
+	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader,&bump_shader,&skybox_shader](){
 		if (diffuse_shader != 0u)
 			glDeleteProgram(diffuse_shader);
 		diffuse_shader = bonobo::createProgram("diffuse.vert", "diffuse.frag");
@@ -129,6 +129,13 @@ edaf80::Assignment3::run()
 		if (bump_shader == 0u)
 			LogError("Failed to load custom normal map shader");
 
+		if (skybox_shader != 0u)
+			glDeleteProgram(skybox_shader);
+		skybox_shader = bonobo::createProgram("skybox.vert", "skybox.frag");
+		if (skybox_shader == 0u)
+			LogError("Failed to load custom skybox shader");
+
+
 		printf("Reloaded shaders\n");
 	};
 	reload_shaders();
@@ -162,10 +169,14 @@ edaf80::Assignment3::run()
 	}
 
 	glActiveTexture(GL_TEXTURE2);
-	std::string skyboxname = "debug";
-	auto skybox_texture = bonobo::loadTextureCubeMap(skyboxname + "/posx.png", skyboxname + "negx.png",
+	std::string skyboxname = "cloudyhills";
+	auto skybox_texture = bonobo::loadTextureCubeMap(skyboxname + "/posx.png", skyboxname + "/negx.png",
 		skyboxname + "/posy.png", skyboxname + "/negy.png",
 		skyboxname + "/posz.png", skyboxname + "/negz.png");
+	if (skybox_texture == 0u) {
+		LogError("Failed to load skybox texture");
+		return;
+	}
 
 	glActiveTexture(GL_TEXTURE1);
 	auto normal_texture = bonobo::loadTexture2D("fieldstone_bump.png");
@@ -195,6 +206,12 @@ edaf80::Assignment3::run()
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
+	auto const skybox_set_uniforms = [skybox_texture](GLuint program) {
+		glUniform1i(glGetUniformLocation(program, "skybox_cube"), 2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+	};
+
 	auto polygon_mode = polygon_mode_t::fill;
 
 	//auto circle_ring = Node();
@@ -210,6 +227,7 @@ edaf80::Assignment3::run()
 	auto skybox = Node();
 	skybox.set_geometry(sphere_shape);
 	skybox.set_program(skybox_shader, skybox_set_uniforms);
+	skybox.set_scaling(glm::vec3(50.0, 50.0, 50.0));
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -299,6 +317,8 @@ edaf80::Assignment3::run()
 
 		sphere.rotate_y(0.01f);
 		sphere.render(mCamera.GetWorldToClipMatrix(), sphere.get_transform());
+
+		skybox.render(mCamera.GetWorldToClipMatrix(), skybox.get_transform());
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
