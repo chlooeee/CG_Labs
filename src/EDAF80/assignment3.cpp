@@ -93,8 +93,8 @@ edaf80::Assignment3::run()
 		return;
 	}
 	GLuint diffuse_shader = 0u, normal_shader = 0u, texcoord_shader = 0u, texture_shader = 0u, phong_shader = 0u, bump_shader = 0u,
-		skybox_shader = 0u, reflection_shader = 0u;
-	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader,&bump_shader,&skybox_shader,&reflection_shader](){
+		skybox_shader = 0u, reflection_shader = 0u, bumpmap_reflection_shader = 0u;
+	auto const reload_shaders = [&diffuse_shader,&normal_shader,&texcoord_shader,&texture_shader,&phong_shader,&bump_shader,&skybox_shader,&reflection_shader,&bumpmap_reflection_shader](){
 		if (diffuse_shader != 0u)
 			glDeleteProgram(diffuse_shader);
 		diffuse_shader = bonobo::createProgram("diffuse.vert", "diffuse.frag");
@@ -141,6 +141,12 @@ edaf80::Assignment3::run()
 		reflection_shader = bonobo::createProgram("reflection.vert", "reflection.frag");
 		if (reflection_shader == 0u)
 			LogError("Failed to load custom reflection shader");
+
+		if (bumpmap_reflection_shader != 0u)
+			glDeleteProgram(bumpmap_reflection_shader);
+		bumpmap_reflection_shader = bonobo::createProgram("bumpmap_reflection.vert", "bumpmap_reflection.frag");
+		if (bumpmap_reflection_shader == 0u)
+			LogError("Failed to load custom bumpmap reflection shader");
 
 		printf("Reloaded shaders\n");
 	};
@@ -191,6 +197,13 @@ edaf80::Assignment3::run()
 		return;
 	}
 
+	glActiveTexture(GL_TEXTURE3);
+	auto bumpmap_reflection_texture = bonobo::loadTexture2D("holes_bump.png");
+	if (bumpmap_reflection_texture == 0u) {
+		LogError("Failed to load normal texture 2");
+		return;
+	}
+
 	auto const texture_set_uniforms = [&texture](GLuint program) {
 		glUniform1i(glGetUniformLocation(program, "sample_texture"), 0);
 		glActiveTexture(GL_TEXTURE0);
@@ -222,6 +235,18 @@ edaf80::Assignment3::run()
 		glUniform1i(glGetUniformLocation(program, "reflection_cube"), 2);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+
+		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+	};
+
+	auto const bumpmap_reflection_set_uniforms = [skybox_texture, bumpmap_reflection_texture, &camera_position](GLuint program) {
+		glUniform1i(glGetUniformLocation(program, "reflection_cube"), 2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+
+		glUniform1i(glGetUniformLocation(program, "bumpmap"),  3);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, bumpmap_reflection_texture);
 
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
 	};
@@ -304,6 +329,10 @@ edaf80::Assignment3::run()
 	
 		if (inputHandler->GetKeycodeState(GLFW_KEY_8) & JUST_PRESSED) {
 			sphere.set_program(reflection_shader, reflection_set_uniforms);
+		}
+
+		if (inputHandler->GetKeycodeState(GLFW_KEY_9) & JUST_PRESSED) {
+			sphere.set_program(bumpmap_reflection_shader, bumpmap_reflection_set_uniforms);
 		}
 
 		if (inputHandler->GetKeycodeState(GLFW_KEY_Z) & JUST_PRESSED) {
