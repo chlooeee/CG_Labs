@@ -117,7 +117,10 @@ parametric_shapes::createQuad(unsigned int width, unsigned int height)
 }
 
 bonobo::mesh_data parametric_shapes::createTesselatedQuad(unsigned int res_width, unsigned int res_height, float width, float height) {
-	auto vertices = std::vector<glm::vec3>((res_width + 1) * (res_height + 1));
+	unsigned int num_vertices = (res_width + 1) * (res_height + 1);
+
+	auto vertices = std::vector<glm::vec3>(num_vertices);
+	auto texture_coords = std::vector<glm::vec3>(num_vertices);
 
 	unsigned int const num_triangles = res_width * res_height * 2;
 	auto indices = std::vector<glm::uvec3>(num_triangles);
@@ -127,11 +130,15 @@ bonobo::mesh_data parametric_shapes::createTesselatedQuad(unsigned int res_width
 	float pos_width = 0.0f, pos_height = 0.0f, d_width = width/res_width, d_height = height/res_height;
 
 	for (unsigned int i = 0u; i <= res_width; ++i) {
-		vertices[i * (res_height + 1)] = glm::vec3(pos_width, pos_height, 0.0f);
+		glm::vec3 position = glm::vec3(pos_width, pos_height, 0.0f);
+		vertices[i * (res_height + 1)] = position;
+		texture_coords[i * (res_height + 1)] = position;
 
 		for (unsigned int j = 1u; j <= res_height; ++j) {
 			pos_height += d_height;
-			vertices[i * (res_height + 1) + j] = glm::vec3(pos_width, pos_height, 0.0f);
+			position = glm::vec3(pos_width, pos_height, 0.0f);
+			vertices[i * (res_height + 1) + j] = position;
+			texture_coords[i * (res_height + 1) + j] = position;
 		}
 
 		pos_width += d_width;
@@ -166,18 +173,20 @@ bonobo::mesh_data parametric_shapes::createTesselatedQuad(unsigned int res_width
 
 	glBindBuffer(GL_ARRAY_BUFFER, data.bo);
 
+	auto size_vertices = vertices.size() * sizeof(glm::vec3);
+	auto size_textures = texture_coords.size() * sizeof(glm::vec3);
+
 	glBufferData(GL_ARRAY_BUFFER,
-							 static_cast<GLsizeiptr>(vertices.size() * sizeof(glm::vec3)),
-							 vertices.data(), GL_STATIC_DRAW);
+							 static_cast<GLsizeiptr>(size_vertices + size_textures),
+							 nullptr, GL_STATIC_DRAW);
 
-	glEnableVertexAttribArray(static_cast<unsigned int>(bonobo::shader_bindings::vertices));
+	glBufferSubData(GL_ARRAY_BUFFER, 0, size_vertices, static_cast<GLvoid const*>(vertices.data()));
+ 	glEnableVertexAttribArray(static_cast<unsigned int>(bonobo::shader_bindings::vertices));
+ 	glVertexAttribPointer(static_cast<unsigned int>(bonobo::shader_bindings::vertices), 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLvoid const*>(0x0));
 
-	glVertexAttribPointer(static_cast<unsigned int>(bonobo::shader_bindings::vertices),
-	                      3,
-	                      GL_FLOAT,
-	                      GL_FALSE,
-	                      0,
-	                      reinterpret_cast<GLvoid const*>(0x0));
+	glBufferSubData(GL_ARRAY_BUFFER, size_vertices, size_textures, static_cast<GLvoid const*>(texture_coords.data()));
+	glEnableVertexAttribArray(static_cast<unsigned int>(bonobo::shader_bindings::texcoords));
+	glVertexAttribPointer(static_cast<unsigned int>(bonobo::shader_bindings::texcoords), 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLvoid const*>(size_vertices));
 
 	glGenBuffers(1, &data.ibo);
 
@@ -193,8 +202,6 @@ bonobo::mesh_data parametric_shapes::createTesselatedQuad(unsigned int res_width
 	glBindVertexArray(0u);
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0u);
-
-	return data;
 
 	return data;
 }
