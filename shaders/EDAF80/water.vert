@@ -27,7 +27,7 @@ out VS_OUT {
 
 void main()
 {
-	vs_out.texcoord = vec2(texcoord.x, texcoord.y);
+	vs_out.texcoord = vec2(texcoord.x, texcoord.z);
 
 	vec4 waves = amplitudes * pow((sin((directions_x * vertex.x + directions_z * vertex.z) * wavenumbers + time * angular_freqs) * 0.5 + 0.5), power * vec4(1.0));
 	vec4 waves_diff_base = 0.5 * power * wavenumbers * amplitudes * pow(sin((directions_x * vertex.x + directions_z * vertex.z) * wavenumbers + time * angular_freqs) * 0.5 + 0.5, (power-1) * vec4(1.0)) *

@@ -115,7 +115,8 @@ edaf80::Assignment4::run()
 
 	// parameter generation for the "large" waves
 
-	float median_wavelength = 1.0, ratio_amp_wavelength = 1.0/7.0, power = 2.0, wind_x = 0.0, wind_z = 1.0, wave_time = 0.0;
+	float median_wavelength = 1.0, ratio_amp_wavelength = 1.0/7.0, power = 2.0, wave_time = 0.0;
+	glm::vec2 wind(0.0, 1.0);
 
 	std::random_device seeder;
 
@@ -133,7 +134,7 @@ edaf80::Assignment4::run()
 		wavenumbers[k] = wavenumber;
 		angular_freqs[k] = std::sqrt(5 * wavenumber);
 		float dir_x = dirx_distribution(generator);
-		glm::vec2 direction = glm::normalize(glm::vec2(dir_x, wind_z));
+		glm::vec2 direction = glm::normalize(glm::vec2(dir_x, wind.y));
 		directions_x[k] = direction.x;
 		directions_z[k] = direction.y;
 	}
@@ -155,7 +156,9 @@ edaf80::Assignment4::run()
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
 	};
 
-	auto const water_set_uniforms = [&camera_position, &amplitudes, &angular_freqs, &wavenumbers, power, &directions_x, &directions_z, &wave_time, skybox_texture](GLuint program){
+	auto const water_set_uniforms = [&camera_position, &amplitudes, &angular_freqs,
+																	&wavenumbers, power, &directions_x, &directions_z,
+																	&wave_time, skybox_texture, ripple_texture, &wind](GLuint program){
 		glUniform4fv(glGetUniformLocation(program, "amplitudes"), 1, glm::value_ptr(amplitudes));
 		glUniform4fv(glGetUniformLocation(program, "angular_freqs"), 1, glm::value_ptr(angular_freqs));
 		glUniform4fv(glGetUniformLocation(program, "wavenumbers"), 1, glm::value_ptr(wavenumbers));
@@ -164,10 +167,15 @@ edaf80::Assignment4::run()
 		glUniform4fv(glGetUniformLocation(program, "directions_z"), 1, glm::value_ptr(directions_z));
 		glUniform1fv(glGetUniformLocation(program, "time"), 1, &wave_time);
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+		glUniform2fv(glGetUniformLocation(program, "wind_direction"), 1, glm::value_ptr(wind));
 
 		glUniform1i(glGetUniformLocation(program, "reflectioncube"), 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+
+		glUniform1i(glGetUniformLocation(program, "ripple_texture"), 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, ripple_texture);
 	};
 	//
 	// Todo: Load your geometry
