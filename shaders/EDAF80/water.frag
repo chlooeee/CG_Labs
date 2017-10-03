@@ -1,6 +1,6 @@
 #version 410
 
-// uniform sampler2D diffuse_texture;
+uniform samplerCube reflectioncube;
 
 uniform vec3 camera_position;
 
@@ -29,5 +29,9 @@ void main()
 
 	float facing = 1- max(dot(view, normal), 0);
 
-	frag_color = mix(color_deep, color_shallow, facing);
+	//Add reflection mapping.
+	vec3 reflection_dir = reflect(-view, normal);
+
+	vec4 reflection_color = texture(reflectioncube, reflection_dir);
+	frag_color = mix(color_deep, color_shallow, facing) + reflection_color;
 }

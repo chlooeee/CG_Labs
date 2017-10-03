@@ -155,7 +155,7 @@ edaf80::Assignment4::run()
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
 	};
 
-	auto const water_set_uniforms = [&camera_position, &amplitudes, &angular_freqs, &wavenumbers, power, &directions_x, &directions_z, &wave_time](GLuint program){
+	auto const water_set_uniforms = [&camera_position, &amplitudes, &angular_freqs, &wavenumbers, power, &directions_x, &directions_z, &wave_time, skybox_texture](GLuint program){
 		glUniform4fv(glGetUniformLocation(program, "amplitudes"), 1, glm::value_ptr(amplitudes));
 		glUniform4fv(glGetUniformLocation(program, "angular_freqs"), 1, glm::value_ptr(angular_freqs));
 		glUniform4fv(glGetUniformLocation(program, "wavenumbers"), 1, glm::value_ptr(wavenumbers));
@@ -164,6 +164,10 @@ edaf80::Assignment4::run()
 		glUniform4fv(glGetUniformLocation(program, "directions_z"), 1, glm::value_ptr(directions_z));
 		glUniform1fv(glGetUniformLocation(program, "time"), 1, &wave_time);
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+
+		glUniform1i(glGetUniformLocation(program, "reflectioncube"), 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
 	};
 	//
 	// Todo: Load your geometry
@@ -265,6 +269,8 @@ edaf80::Assignment4::run()
 		lastTime = nowTime;
 	}
 
+	glDeleteProgram(water_shader);
+	glDeleteProgram(fallback_shader);
 	//
 	// Todo: Do not forget to delete your shader programs, by calling
 	//       `glDeleteProgram($your_shader_program)` for each of them.
