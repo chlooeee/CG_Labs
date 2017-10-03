@@ -130,13 +130,13 @@ bonobo::mesh_data parametric_shapes::createTesselatedQuad(unsigned int res_width
 	float pos_width = 0.0f, pos_height = 0.0f, d_width = width/res_width, d_height = height/res_height;
 
 	for (unsigned int i = 0u; i <= res_width; ++i) {
-		glm::vec3 position = glm::vec3(pos_width, pos_height, 0.0f);
+		glm::vec3 position = glm::vec3(pos_width, 0.0f, pos_height);
 		vertices[i * (res_height + 1)] = position;
 		texture_coords[i * (res_height + 1)] = position;
 
 		for (unsigned int j = 1u; j <= res_height; ++j) {
 			pos_height += d_height;
-			position = glm::vec3(pos_width, pos_height, 0.0f);
+			position = glm::vec3(pos_width, 0.0f, pos_height);
 			vertices[i * (res_height + 1) + j] = position;
 			texture_coords[i * (res_height + 1) + j] = position;
 		}

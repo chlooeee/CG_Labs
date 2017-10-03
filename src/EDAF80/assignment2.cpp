@@ -130,6 +130,11 @@ edaf80::Assignment2::run()
 	sphere.set_program(fallback_shader, set_uniforms);
 	sphere.set_translation(glm::vec3(2.0f, 0.0f, 0.0f));
 
+	auto quad_shape = parametric_shapes::createTesselatedQuad(5, 3, 1.0, 1.0);
+	auto quad = Node();
+	quad.set_geometry(quad_shape);
+	quad.set_program(fallback_shader, set_uniforms);
+
 	//! \todo Create a tesselated sphere and a tesselated torus
 
 
@@ -200,6 +205,7 @@ edaf80::Assignment2::run()
 		if (inputHandler->GetKeycodeState(GLFW_KEY_4) & JUST_PRESSED) {
 			circle_rings.set_program(texcoord_shader, set_uniforms);
 			sphere.set_program(texcoord_shader, set_uniforms);
+			quad.set_program(texcoord_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_Z) & JUST_PRESSED) {
 			polygon_mode = get_next_mode(polygon_mode);
@@ -231,7 +237,7 @@ edaf80::Assignment2::run()
 		}
 		//! \todo Interpolate the movement of a shape between various
 		//!        control points
-		
+
 		pathindex += path_increment;
 		if (pathindex >= num_controlpoints) {
 			pathindex = 0;
@@ -245,6 +251,7 @@ edaf80::Assignment2::run()
 
 		circle_rings.render(mCamera.GetWorldToClipMatrix(), circle_rings.get_transform());
 		sphere.render(mCamera.GetWorldToClipMatrix(), sphere.get_transform());
+		quad.render(mCamera.GetWorldToClipMatrix(), quad.get_transform());
 
 		bool const opened = ImGui::Begin("Scene Controls", nullptr, ImVec2(300, 100), -1.0f, 0);
 		if (opened) {

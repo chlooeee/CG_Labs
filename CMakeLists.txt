@@ -17,6 +17,7 @@ project (
 	LANGUAGES CXX C
 )
 
+set (CXX g++)
 
 # To be able to dowload and compile the dependencies
 include (ExternalProject)
