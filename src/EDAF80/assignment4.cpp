@@ -97,7 +97,7 @@ edaf80::Assignment4::run()
 
 	// Loading textures
 
-	std::string skyboxname = "cloudyhills";
+	std::string skyboxname = "debug";
 	auto skybox_texture = bonobo::loadTextureCubeMap(skyboxname + "/posx.png", skyboxname + "/negx.png",
 		skyboxname + "/posy.png", skyboxname + "/negy.png",
 		skyboxname + "/posz.png", skyboxname + "/negz.png");
@@ -115,15 +115,15 @@ edaf80::Assignment4::run()
 
 	// parameter generation for the "large" waves
 
-	float median_wavelength = 1.0, ratio_amp_wavelength = 1.0/7.0, power = 2.0, wave_time = 0.0;
-	glm::vec2 wind(0.0, 1.0);
+	float median_wavelength = 1.0, ratio_amp_wavelength = 1.0/7.0, power = 2.0, wave_time = 0.0, r_fresnel = 0.02037;
+	glm::vec2 wind(-1.0, 0.0);
 
 	std::random_device seeder;
 
 	std::default_random_engine generator(seeder());
 
   std::uniform_real_distribution<double> wl_distribution(median_wavelength/2.0, 2.0*median_wavelength);
-	std::uniform_real_distribution<double> dirx_distribution(-0.5, 0.5);
+	std::uniform_real_distribution<double> dirz_distribution(-0.5, 0.5);
 
 	glm::vec4 wavelengths, amplitudes, angular_freqs, wavenumbers, directions_x, directions_z;
 
@@ -133,8 +133,8 @@ edaf80::Assignment4::run()
 		float wavenumber = 2 * 3.1416 / wavelength;
 		wavenumbers[k] = wavenumber;
 		angular_freqs[k] = std::sqrt(5 * wavenumber);
-		float dir_x = dirx_distribution(generator);
-		glm::vec2 direction = glm::normalize(glm::vec2(dir_x, wind.y));
+		float dir_z = dirz_distribution(generator);
+		glm::vec2 direction = glm::normalize(glm::vec2(wind.x, dir_z));
 		directions_x[k] = direction.x;
 		directions_z[k] = direction.y;
 	}
@@ -158,7 +158,7 @@ edaf80::Assignment4::run()
 
 	auto const water_set_uniforms = [&camera_position, &amplitudes, &angular_freqs,
 																	&wavenumbers, power, &directions_x, &directions_z,
-																	&wave_time, skybox_texture, ripple_texture, &wind](GLuint program){
+																	&wave_time, skybox_texture, ripple_texture, &wind, r_fresnel](GLuint program){
 		glUniform4fv(glGetUniformLocation(program, "amplitudes"), 1, glm::value_ptr(amplitudes));
 		glUniform4fv(glGetUniformLocation(program, "angular_freqs"), 1, glm::value_ptr(angular_freqs));
 		glUniform4fv(glGetUniformLocation(program, "wavenumbers"), 1, glm::value_ptr(wavenumbers));
@@ -168,6 +168,7 @@ edaf80::Assignment4::run()
 		glUniform1fv(glGetUniformLocation(program, "time"), 1, &wave_time);
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
 		glUniform2fv(glGetUniformLocation(program, "wind_direction"), 1, glm::value_ptr(wind));
+		glUniform1f(glGetUniformLocation(program, "r_fresnel"), r_fresnel);
 
 		glUniform1i(glGetUniformLocation(program, "reflectioncube"), 0);
 		glActiveTexture(GL_TEXTURE0);
