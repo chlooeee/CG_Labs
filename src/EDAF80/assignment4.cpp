@@ -97,7 +97,7 @@ edaf80::Assignment4::run()
 
 	// Loading textures
 
-	std::string skyboxname = "debug";
+	std::string skyboxname = "cloudyhills";
 	auto skybox_texture = bonobo::loadTextureCubeMap(skyboxname + "/posx.png", skyboxname + "/negx.png",
 		skyboxname + "/posy.png", skyboxname + "/negy.png",
 		skyboxname + "/posz.png", skyboxname + "/negz.png");
@@ -115,7 +115,7 @@ edaf80::Assignment4::run()
 
 	// parameter generation for the "large" waves
 
-	float median_wavelength = 1.0, ratio_amp_wavelength = 1.0/7.0, power = 2.0, wave_time = 0.0, r_fresnel = 0.02037;
+	float median_wavelength = 1.0, ratio_amp_wavelength = 1.0/10.0, power = 2.0, wave_time = 0.0, r_fresnel = 0.02037;
 	glm::vec2 wind(-1.0, 0.0);
 
 	std::random_device seeder;
@@ -123,7 +123,7 @@ edaf80::Assignment4::run()
 	std::default_random_engine generator(seeder());
 
   std::uniform_real_distribution<double> wl_distribution(median_wavelength/2.0, 2.0*median_wavelength);
-	std::uniform_real_distribution<double> dirz_distribution(-0.5, 0.5);
+	std::uniform_real_distribution<double> dirz_distribution(-0.75, 0.75);
 
 	glm::vec4 wavelengths, amplitudes, angular_freqs, wavenumbers, directions_x, directions_z;
 
@@ -248,6 +248,9 @@ edaf80::Assignment4::run()
 			reload_shaders();
 		}
 
+		camera_position = mCamera.mWorld.GetTranslation();
+		wave_time += ddeltatime / 1000.0;
+
 		auto const window_size = window->GetDimensions();
 		glViewport(0, 0, window_size.x, window_size.y);
 		glClearDepthf(1.0f);
@@ -260,8 +263,6 @@ edaf80::Assignment4::run()
 
 		skybox.render(mCamera.GetWorldToClipMatrix(), skybox.get_transform());
 		quad_node.render(mCamera.GetWorldToClipMatrix(), quad_node.get_transform());
-
-		wave_time += ddeltatime / 1000.0;
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

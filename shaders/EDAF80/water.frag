@@ -37,9 +37,9 @@ void main()
 
 	vec2 texture_scale = vec2(x_scale, y_scale);
 	float ripple_time = mod(time, 100.0);
-	vec2 ripple_speed = 0.5 * wind_direction; //vec2(-0.05, 0);
+	vec2 ripple_speed = 5 * wind_direction; //vec2(-0.05, 0);
 
-	int num_ripples = 3;
+	int num_ripples = 5;
 	float d_x = x_scale/(num_ripples - 1), d_y = y_scale/(num_ripples - 1);
 
 	vec2 sample_coords = fs_in.texcoord * texture_scale + ripple_time * ripple_speed;
@@ -55,7 +55,7 @@ void main()
 
 	vec3 view = normalize(camera_position - fs_in.world_position);
 
-	float facing = 1- max(dot(view, normal), 0);
+	float facing = 1- max(dot(view, ripple_normal_world), 0);
 
 	//Add reflection mapping.
 	vec3 reflection_dir = reflect(-view, ripple_normal_world);
@@ -70,6 +70,6 @@ void main()
 	vec4 refraction_color = texture(reflectioncube, refraction_dir);
 	vec4 wave_color = mix(color_deep, color_shallow, facing);
 
-	//frag_color = wave_color + reflection_color * fresnel_factor + refraction_color * (1 - fresnel_factor);
-	frag_color = vec4((fs_in.normal + 1) / 2, 1);
+	frag_color = wave_color + reflection_color * fresnel_factor + refraction_color * (1 - fresnel_factor);
+	//frag_color = wave_color;
 }

@@ -268,6 +268,11 @@ edaf80::Assignment3::run()
 	skybox.set_program(skybox_shader, skybox_set_uniforms);
 	skybox.set_scaling(glm::vec3(50.0, 50.0, 50.0));
 
+	auto quad_mesh = parametric_shapes::createTesselatedQuad(10,10,2.0,2.0);
+	auto quad = Node();
+	quad.set_geometry(quad_mesh);
+	quad.set_program(fallback_shader, set_uniforms);
+
 	glEnable(GL_DEPTH_TEST);
 
 	// Enable face culling to improve performance:
@@ -313,6 +318,7 @@ edaf80::Assignment3::run()
 		if (inputHandler->GetKeycodeState(GLFW_KEY_4) & JUST_PRESSED) {
 			//circle_ring.set_program(texcoord_shader, set_uniforms);
 			sphere.set_program(texcoord_shader, set_uniforms);
+			quad.set_program(texcoord_shader, set_uniforms);
 		}
 		if (inputHandler->GetKeycodeState(GLFW_KEY_5) & JUST_PRESSED) {
 			//circle_ring.set_program(texture_shader, texture_set_uniforms);
@@ -322,11 +328,11 @@ edaf80::Assignment3::run()
 			//circle_ring.set_program(phong_shader, phong_set_uniforms);
 			sphere.set_program(phong_shader, phong_set_uniforms);
 		}
-	
+
 		if (inputHandler->GetKeycodeState(GLFW_KEY_7) & JUST_PRESSED) {
 			sphere.set_program(bump_shader, bumpmap_set_uniforms);
 		}
-	
+
 		if (inputHandler->GetKeycodeState(GLFW_KEY_8) & JUST_PRESSED) {
 			sphere.set_program(reflection_shader, reflection_set_uniforms);
 		}
@@ -368,6 +374,8 @@ edaf80::Assignment3::run()
 		sphere.render(mCamera.GetWorldToClipMatrix(), sphere.get_transform());
 
 		skybox.render(mCamera.GetWorldToClipMatrix(), skybox.get_transform());
+
+		quad.render(mCamera.GetWorldToClipMatrix(), quad.get_transform());
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
