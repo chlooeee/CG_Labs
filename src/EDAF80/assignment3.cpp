@@ -174,7 +174,7 @@ edaf80::Assignment3::run()
 	//Setup for the texture shader
 	glActiveTexture(GL_TEXTURE0);
 
-	auto texture = bonobo::loadTexture2D("fieldstone_diffuse.png");
+	auto texture = bonobo::loadTexture2D("earth_diffuse.png");
 	if (texture == 0u) {
 		LogError("Failed to load texture");
 		return;
@@ -191,7 +191,7 @@ edaf80::Assignment3::run()
 	}
 
 	glActiveTexture(GL_TEXTURE1);
-	auto normal_texture = bonobo::loadTexture2D("fieldstone_bump.png");
+	auto normal_texture = bonobo::loadTexture2D("earth_bump.png");
 	if (normal_texture == 0u) {
 		LogError("Failed to load normal texture");
 		return;

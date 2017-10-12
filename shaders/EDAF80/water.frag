@@ -32,14 +32,14 @@ void main()
 	vec3 tangent = normalize(fs_in.tangent);
 
 	//Construct a perturbed normal based on the sampling of waves from a texture
-	float x_scale = 8;
-	float y_scale = 4;
+	float x_scale = 4;
+	float y_scale = 2;
 
 	vec2 texture_scale = vec2(x_scale, y_scale);
 	float ripple_time = mod(time, 100.0);
 	vec2 ripple_speed = 5 * wind_direction; //vec2(-0.05, 0);
 
-	int num_ripples = 5;
+	int num_ripples = 3;
 	float d_x = x_scale/(num_ripples - 1), d_y = y_scale/(num_ripples - 1);
 
 	vec2 sample_coords = fs_in.texcoord * texture_scale + ripple_time * ripple_speed;
@@ -61,7 +61,7 @@ void main()
 	vec3 reflection_dir = reflect(-view, ripple_normal_world);
 
 	//Add refraction mapping
-	vec3 refraction_dir = refract(-view, ripple_normal_world, 1.33);
+	vec3 refraction_dir = refract(-view, ripple_normal_world, 1/1.33);
 
 	// Add fresnel-type reflection/refraction
 	float fresnel_factor = r_fresnel + (1 - r_fresnel) * pow((1 - dot(view, ripple_normal_world)), 5);

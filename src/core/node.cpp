@@ -157,3 +157,7 @@ Node::get_transform() const
 	// Todo: Compute the correct transform matrix
 	return transformation;
 }
+
+glm::vec3 Node::get_translation() const {
+	return glm::vec3(_translation);
+}

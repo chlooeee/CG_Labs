@@ -122,7 +122,7 @@ edaf80::Assignment4::run()
 
 	std::default_random_engine generator(seeder());
 
-  std::uniform_real_distribution<double> wl_distribution(median_wavelength/2.0, 2.0*median_wavelength);
+	std::uniform_real_distribution<double> wl_distribution(median_wavelength/2.0, 2.0*median_wavelength);
 	std::uniform_real_distribution<double> dirz_distribution(-0.75, 0.75);
 
 	glm::vec4 wavelengths, amplitudes, angular_freqs, wavenumbers, directions_x, directions_z;

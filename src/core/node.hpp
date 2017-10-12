@@ -165,6 +165,7 @@ public:
 	//!         transformations; this is the model matrix of this node
 	glm::mat4x4 get_transform() const;
 
+	glm::vec3 get_translation() const;
 private:
 	// Geometry data
 	GLuint _vao;
