@@ -54,4 +54,3 @@ private:
 	InputHandler *mInputHandler;
 	FPSCameraf *mCamera;
 };
-

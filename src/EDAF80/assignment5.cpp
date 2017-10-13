@@ -9,7 +9,7 @@
 #include "config.hpp"
 #include "external/glad/glad.h"
 #include "core/Bonobo.h"
-#include "core/FPSCamera.h"
+#include "core/TwoDCamera.h"
 #include "core/helpers.hpp"
 #include "core/InputHandler.h"
 #include "core/Log.h"
@@ -60,7 +60,7 @@ void
 edaf80::Assignment5::run()
 {
 	// Set up the camera
-	FPSCameraf mCamera(bonobo::pi / 4.0f,
+	TwoDCameraf mCamera(bonobo::pi / 4.0f,
 	                   static_cast<float>(config::resolution_x) / static_cast<float>(config::resolution_y),
 	                   0.01f, 1000.0f);
 	mCamera.mWorld.SetTranslate(glm::vec3(0.0f, 0.0f, 6.0f));
@@ -110,7 +110,7 @@ edaf80::Assignment5::run()
 	std::string skyboxname = "starrynight";
 	auto skybox_texture = bonobo::loadTextureCubeMap(skyboxname + "/posx.png", skyboxname + "/negx.png",
 		skyboxname + "/posy.png", skyboxname + "/negy.png",
-		skyboxname + "/posz.png", skyboxname + "/negz.png", 0);
+		skyboxname + "/posz.png", skyboxname + "/negz.png", 1);
 	if (skybox_texture == 0u) {
 		LogError("Failed to load skybox texture");
 		return;
@@ -141,11 +141,11 @@ edaf80::Assignment5::run()
 		glUniform1i(glGetUniformLocation(program, "sample_texture_normals"), 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, asteroid_bump);
-		
+
 		glUniform1i(glGetUniformLocation(program, "sample_texture"), 1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, asteroid_texture);
-		
+
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
 		glUniform3fv(glGetUniformLocation(program, "specular"), 1, glm::value_ptr(specular));
@@ -199,6 +199,7 @@ edaf80::Assignment5::run()
 	//glCullFace(GL_FRONT);
 	//glCullFace(GL_BACK);
 
+	glfwSetInputMode(window->GetGLFW_Window(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	f64 ddeltatime;
 	size_t fpsSamples = 0;
@@ -247,7 +248,7 @@ edaf80::Assignment5::run()
 
 			// Translate according to velocity
 			asteroids[n].translate(glm::vec3(ddeltatime)*asteroid_velocity);
-			
+
 			// Check visibility
 			if (asteroids[n].get_translation().z < camera_position.z) {
 				asteroids[n].render(mCamera.GetWorldToClipMatrix(), asteroids[n].get_transform());
