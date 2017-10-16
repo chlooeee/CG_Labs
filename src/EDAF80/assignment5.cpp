@@ -59,22 +59,36 @@ edaf80::Assignment5::~Assignment5()
 void
 edaf80::Assignment5::run()
 {
-	// Set up the camera
-	TwoDCameraf mCamera(bonobo::pi / 4.0f,
-	                   static_cast<float>(config::resolution_x) / static_cast<float>(config::resolution_y),
-	                   0.01f, 1000.0f);
-	mCamera.mWorld.SetTranslate(glm::vec3(0.0f, 0.0f, 6.0f));
-	mCamera.mMouseSensitivity = 0.003f;
-	mCamera.mMovementSpeed = 0.025f;
-	window->SetCamera(&mCamera);
-
-	// Create the shader programs
-	auto fallback_shader = bonobo::createProgram("fallback.vert", "fallback.frag");
-	if (fallback_shader == 0u) {
-		LogError("Failed to load fallback shader");
-		return;
-	}
-
+    auto const objects = bonobo::loadObjects("spaceship.obj");
+    if (objects.empty())
+        return;
+    auto const& spaceship_shape = objects.front();
+    
+    
+    // Set up the camera
+    TwoDCameraf mCamera(bonobo::pi / 4.0f,
+                        static_cast<float>(config::resolution_x) / static_cast<float>(config::resolution_y),
+                        0.01f, 1000.0f);
+    mCamera.mWorld.SetTranslate(glm::vec3(0.0f, 0.0f, 6.0f));
+    mCamera.mMouseSensitivity = 0.003f;
+    mCamera.mMovementSpeed = 0.025f;
+    window->SetCamera(&mCamera);
+    
+    // Create the shader programs
+    auto fallback_shader = bonobo::createProgram("fallback.vert", "fallback.frag");
+    if (fallback_shader == 0u) {
+        LogError("Failed to load fallback shader");
+        return;
+    }
+    
+    auto spaceship = Node();
+    spaceship.set_geometry(spaceship_shape);
+    spaceship.set_program(fallback_shader, [](GLuint /*program*/){});
+    spaceship.set_translation(glm::vec3(0.0f, -2.5f, 0.0f));
+    
+    auto spaceship_texture = bonobo::loadTexture2D("metal-surface.png");
+    
+    spaceship.add_texture("diffuse_texture", spaceship_texture, GL_TEXTURE_2D);
 	auto asteroid_shader = 0u, skybox_shader = 0u;
 
 	auto const reload_shaders = [&asteroid_shader, &skybox_shader](){
@@ -262,6 +276,7 @@ edaf80::Assignment5::run()
 		}
 
 		skybox.render(mCamera.GetWorldToClipMatrix(), skybox.get_transform());
+        spaceship.render(mCamera.GetWorldToClipMatrix(), skybox.get_transform());
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
