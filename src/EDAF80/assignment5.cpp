@@ -56,6 +56,11 @@ edaf80::Assignment5::~Assignment5()
 	Log::View::Destroy();
 }
 
+bool edaf80::Assignment5::testSphereSphere(glm::vec3 loc1, float radius1, glm::vec3 loc2, float radius2)
+{
+	return glm::distance(loc1, loc2) < radius1 + radius2;
+}
+
 void
 edaf80::Assignment5::run()
 {
@@ -164,13 +169,9 @@ edaf80::Assignment5::run()
 			glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 		};
 
-		//Setup the data structure for the asteroids
-		int const numAsteroids = 100;
-
-		std::array<Node, numAsteroids> asteroids;
-		std::array<float, numAsteroids> asteroid_radius;
-
 		auto unit_sphere = parametric_shapes::createSphere(50, 50, 1.0);
+
+		auto world = Node();
 
 		//Generate skybox
 		auto skybox_sphere = parametric_shapes::createSphere(50, 50, 500.0f);
@@ -178,19 +179,40 @@ edaf80::Assignment5::run()
 		skybox.set_program(skybox_shader, skybox_set_uniforms);
 		skybox.set_geometry(skybox_sphere);
 
+		//Generate a world node which keeps the spaceship connected to the camera
+		auto camera_space_node = Node();
+
 		//Generate spaceship node
 		auto spaceship = Node();
+		float spaceship_radius = 0.1f;
 		spaceship.set_geometry(spaceship_shape);
 		spaceship.set_program(default_shader, [](GLuint /*program*/){});
-		spaceship.set_translation(glm::vec3(0.0f, -2.5f, 0.0f));
+		spaceship.set_translation(glm::vec3(0.0f, -0.2f, -1.0f));
+		spaceship.set_scaling(spaceship_radius * glm::vec3(1.0f));
 		spaceship.set_rotation_y(bonobo::pi);
 		spaceship.add_texture("diffuse_texture", spaceship_texture, GL_TEXTURE_2D);
+
+		camera_space_node.add_child(&spaceship);
+
+		world.add_child(&camera_space_node);
+
+		// Setup a spawn node for the asteroids, attached to the world node
+
+		auto asteroid_spawn = Node();
+		asteroid_spawn.set_translation(glm::vec3(0.0f, 0.0f, -500.0f));
+		world.add_child(&asteroid_spawn);
+
+		//Setup the data structure for the asteroids
+		int const numAsteroids = 1000;
+
+		std::array<Node, numAsteroids> asteroids;
+		std::array<float, numAsteroids> asteroid_radius;
 
 		//
 		// Todo: Generate an array of random asteriods
 		//
 
-		float const mean_radius = 1.0f, std_dev_radius = 0.5f, MIN_Z = -5.0f, MAX_Z = -500.0f, MIN_X = -100.0f, MAX_X = 100.0f, MIN_Y = -100.0f, MAX_Y = 100.0f;
+		float const mean_radius = 1.0f, std_dev_radius = 0.5f, MIN_Z = 455.0f, MAX_Z = 0.0f, MIN_X = -100.0f, MAX_X = 100.0f, MIN_Y = -100.0f, MAX_Y = 100.0f;
 
 		std::random_device seeder;
 		std::default_random_engine generator(seeder());
@@ -207,10 +229,10 @@ edaf80::Assignment5::run()
 			asteroids[n].set_scaling(glm::vec3(asteroid_radius[n]));
 			asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), asteroid_spawn_z(generator)));
 			asteroids[n].set_program(asteroid_shader, set_asteroid_uniforms);
-			//asteroids[n].set_program(fallback_shader, set_uniforms);
+			asteroid_spawn.add_child(&asteroids[n]);
 		}
 
-		auto asteroid_velocity = glm::vec3(0.0f, 0.0f, 0.05f);
+		glm::vec3 asteroid_velocity(0.0f, 0.0f, 0.05f);
 
 		glEnable(GL_DEPTH_TEST);
 
@@ -219,12 +241,14 @@ edaf80::Assignment5::run()
 		//glCullFace(GL_FRONT);
 		//glCullFace(GL_BACK);
 
-		glfwSetInputMode(window->GetGLFW_Window(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		//glfwSetInputMode(window->GetGLFW_Window(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 		f64 ddeltatime;
 		size_t fpsSamples = 0;
 		double nowTime, lastTime = GetTimeMilliseconds();
 		double fpsNextTick = lastTime + 1000.0;
+
+		int num_collisions = 0;
 
 		while (!glfwWindowShouldClose(window->GetGLFW_Window())) {
 			nowTime = GetTimeMilliseconds();
@@ -260,29 +284,49 @@ edaf80::Assignment5::run()
 
 			camera_position = mCamera.mWorld.GetTranslation();
 
+			camera_space_node.set_translation(camera_position);
+			// Add a check here to ensure that the camera never goes out of bounds
+
 			//
 			// Todo: Render all your geometry here.
 			//
+			auto world_matrix = world.get_transform();
+			auto camera_transform = world_matrix * camera_space_node.get_transform();
+			auto spaceship_transform = camera_transform * spaceship.get_transform();
+			auto asteroid_spawn_transform = world_matrix * asteroid_spawn.get_transform();
+
+			glm::vec3 camera_location(camera_transform * glm::vec4(camera_space_node.get_translation(), 1));
+
+			glm::vec3 spaceship_location(spaceship_transform * glm::vec4(spaceship.get_translation(), 1));
 
 			for (int n = 0; n < numAsteroids; ++n) {
 
 				// Translate according to velocity
 				asteroids[n].translate(glm::vec3(ddeltatime)*asteroid_velocity);
 
-				// Check visibility
-				if (asteroids[n].get_translation().z < camera_position.z) {
-					asteroids[n].render(mCamera.GetWorldToClipMatrix(), asteroids[n].get_transform());
+				// Check visibility and collision
+
+				glm::vec3 asteroid_location(asteroid_spawn_transform * glm::vec4(asteroids[n].get_translation(), 1));
+
+				if (asteroid_location.z < camera_location.z) {
+					asteroids[n].render(mCamera.GetWorldToClipMatrix(), asteroid_spawn_transform * asteroids[n].get_transform());
+					if (edaf80::Assignment5::testSphereSphere(asteroid_location, asteroid_radius[n], spaceship_location, spaceship_radius)) {
+						std::cout << ++num_collisions << std::endl;
+						asteroid_radius[n] = asteroid_radii(generator);
+						asteroids[n].set_scaling(glm::vec3(asteroid_radius[n]));
+						asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), 0));
+					}
 				}
 				else {
 					asteroid_radius[n] = asteroid_radii(generator);
 					asteroids[n].set_scaling(glm::vec3(asteroid_radius[n]));
-					asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), -500.0) + camera_position);
+					asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), 0));
 				}
-				// check collision
+
 			}
 
 			skybox.render(mCamera.GetWorldToClipMatrix(), skybox.get_transform());
-			spaceship.render(mCamera.GetWorldToClipMatrix(), spaceship.get_transform());
+			spaceship.render(mCamera.GetWorldToClipMatrix(), spaceship_transform);
 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

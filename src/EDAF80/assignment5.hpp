@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/glm.hpp>
 
 class InputHandler;
 class Window;
@@ -25,6 +26,9 @@ namespace edaf80
 		//! \brief Contains the logic of the assignment, along with the
 		//! render loop.
 		void run();
+
+		bool testSphereSphere(glm::vec3 loc1, float radius1, glm::vec3 loc2, float radius2);
+
 
 	private:
 		InputHandler *inputHandler;
