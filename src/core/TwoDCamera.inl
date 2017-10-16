@@ -7,12 +7,12 @@ void TwoDCamera<T, P>::Update(double dt, InputHandler &ih)
 	mMousePosition = newMousePosition;
 	mouse_diff *= mMouseSensitivity;
 
-	if (!ih.IsMouseCapturedByUI() && (ih.GetMouseState(GLFW_MOUSE_BUTTON_LEFT) & PRESSED)) {
-		mRotation.x -= mouse_diff.x;
-		mRotation.y += mouse_diff.y;
-		mWorld.SetRotateX(mRotation.y);
-		mWorld.RotateY(mRotation.x);
-	}
+	//if (!ih.IsMouseCapturedByUI() && (ih.GetMouseState(GLFW_MOUSE_BUTTON_LEFT) & PRESSED)) {
+	//	mRotation.x -= mouse_diff.x;
+	//	mRotation.y += mouse_diff.y;
+	//	mWorld.SetRotateX(mRotation.y);
+	//	mWorld.RotateY(mRotation.x);
+	//}
 
 	T movementModifier = ((ih.GetKeycodeState(GLFW_MOD_SHIFT) & PRESSED)) ? 0.25f : ((ih.GetKeycodeState(GLFW_MOD_CONTROL) & PRESSED)) ? 4.0f : 1.0f;
 	T movement = movementModifier * T(dt) * mMovementSpeed;
