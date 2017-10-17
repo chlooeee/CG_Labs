@@ -179,8 +179,7 @@ edaf80::Assignment5::run()
 		skybox.set_program(skybox_shader, skybox_set_uniforms);
 		skybox.set_geometry(skybox_sphere);
 
-		//Generate a world node which keeps the spaceship connected to the camera
-		auto camera_space_node = Node();
+		world.add_child(&skybox);
 
 		//Generate spaceship node
 		auto spaceship = Node();
@@ -192,9 +191,7 @@ edaf80::Assignment5::run()
 		spaceship.set_rotation_y(bonobo::pi);
 		spaceship.add_texture("diffuse_texture", spaceship_texture, GL_TEXTURE_2D);
 
-		camera_space_node.add_child(&spaceship);
-
-		world.add_child(&camera_space_node);
+		world.add_child(&spaceship);
 
 		// Setup a spawn node for the asteroids, attached to the world node
 
@@ -212,7 +209,7 @@ edaf80::Assignment5::run()
 		// Todo: Generate an array of random asteriods
 		//
 
-		float const mean_radius = 1.0f, std_dev_radius = 0.5f, MIN_Z = 455.0f, MAX_Z = 0.0f, MIN_X = -100.0f, MAX_X = 100.0f, MIN_Y = -100.0f, MAX_Y = 100.0f;
+		float const mean_radius = 1.0f, std_dev_radius = 0.5f, MIN_Z = -5.0f, MAX_Z = -500.0f, MIN_X = -100.0f, MAX_X = 100.0f, MIN_Y = -100.0f, MAX_Y = 100.0f;
 
 		std::random_device seeder;
 		std::default_random_engine generator(seeder());
@@ -229,7 +226,7 @@ edaf80::Assignment5::run()
 			asteroids[n].set_scaling(glm::vec3(asteroid_radius[n]));
 			asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), asteroid_spawn_z(generator)));
 			asteroids[n].set_program(asteroid_shader, set_asteroid_uniforms);
-			asteroid_spawn.add_child(&asteroids[n]);
+			//asteroid_spawn.add_child(&asteroids[n]);
 		}
 
 		glm::vec3 asteroid_velocity(0.0f, 0.0f, 0.05f);
@@ -284,20 +281,19 @@ edaf80::Assignment5::run()
 
 			camera_position = mCamera.mWorld.GetTranslation();
 
-			camera_space_node.set_translation(camera_position);
+			world.set_translation(camera_position);
 			// Add a check here to ensure that the camera never goes out of bounds
 
 			//
 			// Todo: Render all your geometry here.
 			//
 			auto world_matrix = world.get_transform();
-			auto camera_transform = world_matrix * camera_space_node.get_transform();
-			auto spaceship_transform = camera_transform * spaceship.get_transform();
+			auto spaceship_transform = world_matrix * spaceship.get_transform();
 			auto asteroid_spawn_transform = world_matrix * asteroid_spawn.get_transform();
 
-			glm::vec3 camera_location(camera_transform * glm::vec4(camera_space_node.get_translation(), 1));
-
-			glm::vec3 spaceship_location(spaceship_transform * glm::vec4(spaceship.get_translation(), 1));
+			glm::vec3 spaceship_location(spaceship_transform * glm::vec4(0, 0, 0, 1));
+			glm::vec3 asteroid_spawn_location(asteroid_spawn_transform * glm::vec4(0, 0, 0, 1));
+			glm::vec3 camera_location(world_matrix * glm::vec4(0, 0, 0, 1));
 
 			for (int n = 0; n < numAsteroids; ++n) {
 
@@ -305,28 +301,30 @@ edaf80::Assignment5::run()
 				asteroids[n].translate(glm::vec3(ddeltatime)*asteroid_velocity);
 
 				// Check visibility and collision
-
-				glm::vec3 asteroid_location(asteroid_spawn_transform * glm::vec4(asteroids[n].get_translation(), 1));
+				glm::vec3 asteroid_location = glm::vec3((asteroids[n].get_transform() * glm::vec4(0, 0, 0, 1.0f)));
 
 				if (asteroid_location.z < camera_location.z) {
-					asteroids[n].render(mCamera.GetWorldToClipMatrix(), asteroid_spawn_transform * asteroids[n].get_transform());
+					asteroids[n].render(mCamera.GetWorldToClipMatrix(), asteroids[n].get_transform());
 					if (edaf80::Assignment5::testSphereSphere(asteroid_location, asteroid_radius[n], spaceship_location, spaceship_radius)) {
 						std::cout << ++num_collisions << std::endl;
 						asteroid_radius[n] = asteroid_radii(generator);
 						asteroids[n].set_scaling(glm::vec3(asteroid_radius[n]));
-						asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), 0));
+						glm::vec3 new_loc = asteroid_spawn_location + glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), 0);
+						asteroids[n].set_translation(new_loc);
 					}
 				}
 				else {
 					asteroid_radius[n] = asteroid_radii(generator);
 					asteroids[n].set_scaling(glm::vec3(asteroid_radius[n]));
-					asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), 0));
+					asteroids[n].set_translation(glm::vec3(asteroid_spawn_x(generator), asteroid_spawn_y(generator), 0) + asteroid_spawn_location);
 				}
 
 			}
 
-			skybox.render(mCamera.GetWorldToClipMatrix(), skybox.get_transform());
+			skybox.render(mCamera.GetWorldToClipMatrix(), world_matrix*skybox.get_transform());
 			spaceship.render(mCamera.GetWorldToClipMatrix(), spaceship_transform);
+
+			asteroid_spawn.render(mCamera.GetWorldToClipMatrix(), world_matrix * asteroid_spawn.get_transform());
 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
