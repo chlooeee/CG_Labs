@@ -19,6 +19,7 @@
 #include "core/Window.h"
 #include <imgui.h>
 #include "external/imgui_impl_glfw_gl3.h"
+#include <time.h>
 
 #include "external/glad/glad.h"
 #include <GLFW/glfw3.h>
@@ -247,7 +248,7 @@ edaf80::Assignment5::run()
 
 		int num_collisions = 0;
 
-		while (!glfwWindowShouldClose(window->GetGLFW_Window())) {
+		while (!glfwWindowShouldClose(window->GetGLFW_Window()) && num_collisions == 0) {
 			nowTime = GetTimeMilliseconds();
 			ddeltatime = nowTime - lastTime;
 			if (nowTime > fpsNextTick) {
@@ -334,8 +335,9 @@ edaf80::Assignment5::run()
 			// Todo: If you want a custom ImGUI window, you can set it up
 			//       here
 			//
+            
 
-			ImGui::Render();
+            ImGui::Render();
 
 			window->Swap();
 			lastTime = nowTime;
@@ -347,12 +349,30 @@ edaf80::Assignment5::run()
 		//
 	}
 
-	int main()
+
+void presentGameOverScreen(double time_lasted) {
+    while (true) {
+        ImGui_ImplGlfwGL3_NewFrame();
+        bool opened = true;
+        ImGui::Begin("YOU CRASHED INTO AN ASTEROID!", &opened, ImVec2(5,5), 0.0f, 0);
+        ImGui::Text(" GAME OVER , YOU LASTED %f SECONDS!", time_lasted);
+        ImGui::End();
+        ImGui::Render();
+    }
+    
+}
+
+
+int main()
 	{
+        
+        time_t start = time(0);
 		Bonobo::Init();
 		try {
 			edaf80::Assignment5 assignment5;
 			assignment5.run();
+            double seconds_since_start = difftime( time(0), start);
+            presentGameOverScreen(seconds_since_start);
 		} catch (std::runtime_error const& e) {
 			LogError(e.what());
 		}
